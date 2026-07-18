@@ -1,9 +1,16 @@
 import javax.print.attribute.HashAttributeSet;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.Line;
+import javax.swing.*;
 import javax.swing.undo.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.Hashtable;
 
 abstract class UndoableTextArea extends TextArea implements StateEditable {
@@ -89,69 +96,6 @@ abstract class UndoableTextArea extends TextArea implements StateEditable {
             }
         });
     }
-}
-
-class FontType implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class FM implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class Size implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class New implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class Open implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class Save implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class Exit implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class Cut implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class Copy implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class Paste implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class BC implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class WW implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-    }
-}
-
-class Win extends WindowAdapter {
 }
 
 public class TextEditor extends Frame{
@@ -284,6 +228,188 @@ public class TextEditor extends Frame{
         mn.add(color);
         mn.add(undo);
         setMenuBar(mn);
+
+        mylistener mylist=new mylistener();
+        addWindowListener(mylist);
+    }
+    class  WW implements ActionListener{
+        public void actionPerformed(ActionEvent e) {
+            String se=e.getActionCommand();
+            if(se.equals("Undo"))
+                txt.undo();
+            if(se.equals("Redo"))
+                txt.redo();
+        }
+    }
+    class mylistener extends WindowAdapter{
+        public void windowClosing(WindowEvent we){
+            System.exit(0);
+        }
+    }
+    class New implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            txt.setText("");
+            setTitle(filename);
+            fn="Untitled";
+        }
+    }
+    class Open implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            FileDialog fd=new FileDialog(TextEditor.this,"Select");
+            fd.show();
+            if((fn=fd.getFile())!=null){
+                filename=fd.getDirectory()+fd.getFile();
+                dn=fd.getDirectory();
+                setTitle(filename);
+                readFile();
+            }
+            txt.requestFocus();
+        }
+    }
+    class Save implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            FileDialog fd=new FileDialog(TextEditor.this,"SaveFile",FileDialog.SAVE);
+            fd.setFile(fn);
+            fd.setDirectory(dn);
+            fd.show();
+            if(fd.getFile()!=null){
+                filename=fd.getDirectory()+fd.getFile();
+                setTitle(filename);
+                writeFile();
+                txt.requestFocus();
+            }
+        }
+    }
+    class Exit implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            System.exit(0);
+        }
+    }
+    void readFile(){
+        BufferedReader d;
+        StringBuffer sb=new StringBuffer();
+        try {
+            d = new BufferedReader(new FileReader(filename));
+            String line;
+            while ((line = d.readLine()) != null)
+                sb.append(line + "\n");
+            txt.setText(sb.toString());
+            d.close();
+        } catch (java.io.IOException e) {
+            System.out.println("File not found");
+        }
+    }
+    public void writeFile(){
+        try{
+            java.io.DataOutputStream d=new java.io.DataOutputStream(new java.io.FileOutputStream(filename));
+            String line=txt.getText();
+            java.io.BufferedReader br=new java.io.BufferedReader(new java.io.StringReader(line));
+            while ((line=br.readLine())!=null){
+                d.writeBytes(line+"\n");
+            }
+            d.close();
+        }catch (Exception e){
+            System.out.println("File not found");
+        }
+    }
+    class Cut implements ActionListener{
+        public void actionPerformed(ActionEvent ae) {
+            String sel=txt.getSelectedText();
+            StringSelection ss=new StringSelection(sel);
+            clip.setContents(ss,ss);
+            txt.replaceRange("",txt.getSelectionStart(),txt.getSelectionEnd());
+
+        }
+    }
+    class Copy implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            String sel=txt.getSelectedText();
+            StringSelection clipstring=new StringSelection(sel);
+            clip.setContents(clipstring,clipstring);
+        }
+    }
+    class Paste implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            Transferable cliptran=clip.getContents(TextEditor.this);
+            try{
+                String sel=(String)cliptran.getTransferData(DataFlavor.stringFlavor);
+                txt.replaceRange(sel,txt.getSelectionStart(),txt.getSelectionEnd());
+            }catch (Exception e){
+                System.out.println("not starting flavor");
+            }
+        }
+    }
+    class Win extends WindowAdapter{
+        public void windowClosing(WindowEvent we){
+            System.exit(0);
+        }
+    }
+
+    class FontType implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            MenuItem item=(MenuItem)ae.getSource();
+            String name=item.getLabel();
+            f=new Font(name,style,fsize);
+            txt.setFont(f);
+        }
+    }
+
+    class FM implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            MenuItem item=(MenuItem)ae.getSource();
+            String label=item.getLabel();
+            if(label.equals("Bold"))
+                style=Font.BOLD;
+            else if(label.equals("Italic"))
+                style=Font.ITALIC;
+            else
+                style=Font.PLAIN;
+            f=new Font(f.getFamily(),style,fsize);
+            txt.setFont(f);
+        }
+    }
+
+    class Size implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            MenuItem item=(MenuItem)ae.getSource();
+            String label=item.getLabel();
+            fsize=Integer.parseInt(label);
+            f=new Font(f.getFamily(),style,fsize);
+            txt.setFont(f);
+        }
+    }
+
+    class BC implements ActionListener{
+        public void actionPerformed(ActionEvent ae){
+            st=ae.getActionCommand();
+            new ColorChooser();
+        }
+    }
+
+    class ColorChooser extends Frame{
+        JColorChooser jcc;
+        ColorChooser(){
+            setTitle("Choose Color");
+            setLayout(new BorderLayout());
+            jcc=new JColorChooser();
+            add(jcc,BorderLayout.CENTER);
+            Button ok=new Button("OK");
+            add(ok,BorderLayout.SOUTH);
+            ok.addActionListener(new B());
+            setSize(500,400);
+            setVisible(true);
+        }
+
+        class B implements ActionListener{
+            public void actionPerformed(ActionEvent e){
+                System.out.println("Color Is:"+jcc.getColor().toString());
+                if(st.equals("Background"))
+                    txt.setBackground(jcc.getColor());
+                if(st.equals("Foreground"))
+                    txt.setForeground(jcc.getColor());
+                setVisible(false);
+            }
+        }
     }
 
     public static void main(String[] args) {
